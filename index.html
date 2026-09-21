@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나만의 레고 추천</title>
+<meta name="description" content="가격, 연령, 테마로 원하는 레고 세트를 찾아주는 검색 앱">
+<meta name="theme-color" content="#ffd500">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+    :root {
+        --bg: #f0f4f8;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --text-strong: #0f172a;
+        --text-body: #334155;
+        --text-muted: #475569;
+        --text-faint: #94a3b8;
+        --accent: #ffd500;
+        --accent-hover: #eab308;
+        --tag-bg: #e2e8f0;
+        --reset-bg: #e2e8f0;
+        --reset-bg-hover: #cbd5e1;
+        --link: #2563eb;
+        --badge: #ef4444;
+        --card-alt-bg: #f8fafc;
+    }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+        padding-block: 40px;
+        margin: 0;
+    }
+    .container {
+        background-color: var(--card-bg);
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 550px;
+        box-sizing: border-box;
+    }
+    h1 {
+        text-align: center;
+        color: var(--accent);
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    p.subtitle {
+        text-align: center;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+    }
+    p.update-note {
+        text-align: center;
+        color: var(--text-faint);
+        font-size: 0.8rem;
+        margin-bottom: 25px;
+    }
+    .filter-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .input-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .input-group.full-width {
+        grid-column: span 2;
+    }
+    label {
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: var(--text-body);
+        font-size: 0.9rem;
+    }
+    select, input[type="text"] {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border-strong);
+        background-color: var(--card-bg);
+        color: var(--text-strong);
+        font-size: 0.95rem;
+        outline: none;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+    select:focus, input[type="text"]:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.3);
+    }
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    button {
+        flex: 2;
+        padding: 15px;
+        background-color: var(--accent);
+        color: #0f172a;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: background-color 0.2s;
+        font-family: inherit;
+    }
+    button:hover {
+        background-color: var(--accent-hover);
+    }
+    .btn-reset {
+        flex: 1;
+        background-color: var(--reset-bg);
+        color: var(--text-muted);
+    }
+    .btn-reset:hover {
+        background-color: var(--reset-bg-hover);
+    }
+    .result-summary {
+        margin-top: 25px;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        font-weight: bold;
+        padding-left: 4px;
+    }
+    .result-container {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .lego-card {
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--card-alt-bg);
+        transition: transform 0.2s, border-color 0.2s;
+        position: relative;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+    }
+    .lego-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+        border-color: var(--accent);
+    }
+    .lego-card:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+    }
+    .lego-link-hint {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: var(--link);
+        font-weight: bold;
+    }
+    .lego-info {
+        flex: 1;
+        padding-right: 15px;
+        min-width: 0;
+    }
+    .lego-info h3 {
+        margin: 0 0 8px 0;
+        color: var(--text-strong);
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .lego-info p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+    .lego-tag {
+        display: inline-block;
+        background-color: var(--tag-bg);
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 8px;
+    }
+    .new-badge {
+        display: inline-block;
+        background-color: var(--badge);
+        color: white;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        vertical-align: middle;
+    }
+    .lego-image {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        border-radius: 8px;
+        background-color: white;
+        padding: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        flex-shrink: 0;
+    }
+    @media (max-width: 480px) {
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+        .input-group.full-width {
+            grid-column: span 1;
+        }
+        .lego-card {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+        .lego-info {
+            padding-right: 0;
+            margin-top: 10px;
+            order: 2;
+        }
+        .lego-info h3 {
+            justify-content: center;
+        }
+        .lego-image {
+            align-self: center;
+        }
+    }
+</style>
+
+</head>
+<body>
+<div class="container">
+    <h1><img src="https://upload.wikimedia.org/wikipedia/commons/2/24/LEGO_logo.svg" alt="레고" style="height: 40px; margin-right: 10px;"> 나만의 레고 추천</h1>
+    <p class="subtitle">원하는 조건을 입력하고 찾아보세요!</p>
+    <p class="update-note">💡 2026년 9월 기준 최신 라인업 · 가격 반영</p>
+
+    <div class="filter-grid">
+        <div class="input-group full-width">
+            <label for="searchInput">레고 이름/테마 검색 🔍</label>
+            <input type="text" id="searchInput" placeholder="예: 해리포터, 마리오, 스타트렉..." aria-label="레고 이름 또는 테마 검색">
+        </div>
+
+        <div class="input-group full-width">
+            <label for="priceSelect">가격대 💰</label>
+            <select id="priceSelect" aria-label="가격대 선택">
+                <option value="all">전체 가격</option>
+                <option value="under5">5만 원 미만 (가벼운 선물)</option>
+                <option value="under10">5만 원 ~ 10만 원</option>
+                <option value="under30">10만 원 ~ 30만 원</option>
+                <option value="over30">30만 원 이상 (프리미엄)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="ageSelect">나이</label>
+            <select id="ageSelect" aria-label="나이 선택">
+                <option value="all">전체 연령</option>
+                <option value="child">어린이용 (6+)</option>
+                <option value="adult">어른용 (18+)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="genderSelect">성별</label>
+            <select id="genderSelect" aria-label="성별 선택">
+                <option value="all">성별 무관</option>
+                <option value="boy">남성/남아 선호</option>
+                <option value="girl">여성/여아 선호</option>
+                <option value="unisex">남녀 공용</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="themeSelect">테마</label>
+            <select id="themeSelect" aria-label="테마 선택">
+                <option value="all">모든 테마</option>
+                <option value="icons">아이콘 (2026 신작) 🆕</option>
+                <option value="city">시티 (경찰, 소방)</option>
+                <option value="technic">테크닉 (자동차)</option>
+                <option value="ninjago">닌자고 (드래곤)</option>
+                <option value="minecraft">마인크래프트</option>
+                <option value="starwars">스타워즈</option>
+                <option value="friends">프렌즈</option>
+                <option value="harrypotter">해리포터</option>
+                <option value="mario">슈퍼 마리오</option>
+                <option value="creator">크리에이터</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="sortSelect">정렬</label>
+            <select id="sortSelect" aria-label="정렬 방식 선택">
+                <option value="default">기본순</option>
+                <option value="priceAsc">가격 낮은 순 ⬇️</option>
+                <option value="priceDesc">가격 높은 순 ⬆️</option>
+                <option value="nameAsc">이름 가나다순</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="button-group">
+        <button class="btn-reset" onclick="resetFilters()">초기화 ↺</button>
+        <button onclick="findLego()">레고 찾기 🚀</button>
+    </div>
+
+    <div class="result-summary" id="resultSummary"></div>
+    <div class="result-container" id="resultBox"></div>
+</div>
+
+<script>
+    // 2026년 9월 기준 레고 라인업 및 가격 (레고 코리아 공식 스토어 기준, 원)
+    const legoData = [
+        // 🆕 아이콘 (2026년 9월 신작 · 블록버스터 라인업)
+        { name: "배트맨 리턴즈 배트모빌", theme: "icons", age: "adult", gender: "boy", price: "334,900원", imageUrl: "https://images.brickset.com/sets/images/76355-1.jpg", isNew: true },
+        { name: "네모바지 스폰지밥: 비키니시티", theme: "icons", age: "adult", gender: "unisex", price: "319,900원", imageUrl: "https://images.brickset.com/sets/images/11386-1.jpg", isNew: true },
+        { name: "스타트렉: 엔터프라이즈호 브릿지", theme: "icons", age: "adult", gender: "unisex", price: "290,900원", imageUrl: "https://images.brickset.com/sets/images/11385-1.jpg", isNew: true },
+
+        // 시티
+        { name: "감자튀김 푸드트럭", theme: "city", age: "child", gender: "unisex", price: "24,900원", imageUrl: "https://images.brickset.com/sets/images/60488-1.jpg", isNew: true },
+        { name: "경찰 바이크 자동차 추격전", theme: "city", age: "child", gender: "boy", price: "29,900원", imageUrl: "https://images.brickset.com/sets/images/60392-1.jpg" },
+        { name: "여객기", theme: "city", age: "child", gender: "unisex", price: "139,900원", imageUrl: "https://images.brickset.com/sets/images/60367-1.jpg" },
+        { name: "라바 랜드 롤러코스터 공원", theme: "city", age: "child", gender: "unisex", price: "159,900원", imageUrl: "https://images.brickset.com/sets/images/60501-1.jpg" },
+        { name: "시티 크리스마스 캘린더 2026", theme: "city", age: "child", gender: "unisex", price: "42,900원", imageUrl: "https://images.brickset.com/sets/images/60510-1.jpg", isNew: true },
+
+        // 테크닉
+        { name: "쾨닉세그 세다이르 스피어 메가카", theme: "technic", age: "adult", gender: "boy", price: "679,900원", imageUrl: "https://images.brickset.com/sets/images/42232-1.jpg" },
+        { name: "맥라렌 P1", theme: "technic", age: "adult", gender: "boy", price: "599,900원", imageUrl: "https://images.brickset.com/sets/images/42172-1.jpg" },
+        { name: "볼보 EC500 하이브리드 굴착기", theme: "technic", age: "adult", gender: "unisex", price: "539,900원", imageUrl: "https://images.brickset.com/sets/images/42215-1.jpg" },
+        { name: "몬스터 잼 메갈로돈", theme: "technic", age: "child", gender: "boy", price: "34,900원", imageUrl: "https://images.brickset.com/sets/images/42134-1.jpg" },
+        { name: "맥라렌 포뮬러 1 레이스카", theme: "technic", age: "adult", gender: "boy", price: "279,900원", imageUrl: "https://images.brickset.com/sets/images/42141-1.jpg" },
+
+        // 닌자고
+        { name: "제이의 변신 자동차", theme: "ninjago", age: "child", gender: "boy", price: "69,900원", imageUrl: "https://images.brickset.com/sets/images/71856-1.jpg", isNew: true },
+        { name: "울트라 드래곤 배틀", theme: "ninjago", age: "child", gender: "boy", price: "299,900원", imageUrl: "https://images.brickset.com/sets/images/71872-1.jpg" },
+        { name: "토너먼트 템플 시티", theme: "ninjago", age: "adult", gender: "unisex", price: "329,900원", imageUrl: "https://images.brickset.com/sets/images/71814-1.jpg" },
+        { name: "올드 타운 (15주년 기념)", theme: "ninjago", age: "adult", gender: "unisex", price: "419,900원", imageUrl: "https://images.brickset.com/sets/images/71861-1.jpg", isNew: true },
+        { name: "닌자 캐릭터 디스플레이 (15주년 기념)", theme: "ninjago", age: "adult", gender: "unisex", price: "54,900원", imageUrl: "https://images.brickset.com/sets/images/71866-1.jpg", isNew: true },
+
+        // 마인크래프트
+        { name: "엔더드래곤", theme: "minecraft", age: "child", gender: "unisex", price: "93,900원", imageUrl: "https://images.brickset.com/sets/images/21595-1.jpg" },
+        { name: "가스트 열기구 마을 공격", theme: "minecraft", age: "child", gender: "unisex", price: "159,900원", imageUrl: "https://images.brickset.com/sets/images/21273-1.jpg" },
+        { name: "엔더맨 타워", theme: "minecraft", age: "child", gender: "unisex", price: "149,900원", imageUrl: "https://images.brickset.com/sets/images/21279-1.jpg" },
+        { name: "첫 번째 모험", theme: "minecraft", age: "child", gender: "unisex", price: "46,900원", imageUrl: "https://images.brickset.com/sets/images/21169-1.jpg" },
+
+        // 스타워즈
+        { name: "만달로어 포위전 배틀 팩", theme: "starwars", age: "child", gender: "boy", price: "29,900원", imageUrl: "https://images.brickset.com/sets/images/75449-1.jpg" },
+        { name: "데스스타 (UCS)", theme: "starwars", age: "adult", gender: "boy", price: "1,399,000원", imageUrl: "https://images.brickset.com/sets/images/75329-1.jpg" },
+        { name: "다스베이더 헬멧", theme: "starwars", age: "adult", gender: "unisex", price: "129,900원", imageUrl: "https://images.brickset.com/sets/images/75304-1.jpg" },
+        { name: "루크의 X-윙 파이터", theme: "starwars", age: "child", gender: "boy", price: "84,900원", imageUrl: "https://images.brickset.com/sets/images/75301-1.jpg" },
+
+        // 프렌즈
+        { name: "우정 트리하우스", theme: "friends", age: "child", gender: "girl", price: "99,900원", imageUrl: "https://images.brickset.com/sets/images/42652-1.jpg" },
+        { name: "인어 롤러코스터 놀이기구", theme: "friends", age: "child", gender: "girl", price: "159,900원", imageUrl: "https://images.brickset.com/sets/images/42703-1.jpg" },
+        { name: "플라워 카페", theme: "friends", age: "child", gender: "girl", price: "139,900원", imageUrl: "https://images.brickset.com/sets/images/42671-1.jpg" },
+        { name: "농장 동물 병원", theme: "friends", age: "child", gender: "unisex", price: "99,900원", imageUrl: "https://images.brickset.com/sets/images/42632-1.jpg" },
+        { name: "리안의 패밀리 하우스", theme: "friends", age: "child", gender: "unisex", price: "99,900원", imageUrl: "https://images.brickset.com/sets/images/42687-1.jpg", isNew: true },
+
+        // 해리포터
+        { name: "마법 정부 (컬렉터스 에디션)", theme: "harrypotter", age: "adult", gender: "unisex", price: "649,900원", imageUrl: "https://images.brickset.com/sets/images/76476-1.jpg" },
+        { name: "호그스미드 마을 (컬렉터스 에디션)", theme: "harrypotter", age: "adult", gender: "unisex", price: "509,900원", imageUrl: "https://images.brickset.com/sets/images/76457-1.jpg" },
+        { name: "호그와트 성", theme: "harrypotter", age: "adult", gender: "unisex", price: "640,000원", imageUrl: "https://images.brickset.com/sets/images/71043-1.jpg" },
+        { name: "녹턴 앨리 마법상점가", theme: "harrypotter", age: "child", gender: "unisex", price: "159,900원", imageUrl: "https://images.brickset.com/sets/images/76471-1.jpg" },
+        { name: "도비 인형", theme: "harrypotter", age: "child", gender: "unisex", price: "54,900원", imageUrl: "https://images.brickset.com/sets/images/76421-1.jpg" },
+
+        // 슈퍼 마리오
+        { name: "동키콩 아케이드 게임", theme: "mario", age: "adult", gender: "unisex", price: "259,900원", imageUrl: "https://images.brickset.com/sets/images/72051-1.jpg" },
+        { name: "마리오 카트: 루이지 & G포스", theme: "mario", age: "adult", gender: "unisex", price: "269,900원", imageUrl: "https://images.brickset.com/sets/images/72050-1.jpg", isNew: true },
+        { name: "게임보이", theme: "mario", age: "adult", gender: "unisex", price: "89,900원", imageUrl: "https://images.brickset.com/sets/images/71425-1.jpg" },
+        { name: "마리오 카트: 마리오 & 스탠더드카트", theme: "mario", age: "adult", gender: "unisex", price: "239,900원", imageUrl: "https://images.brickset.com/sets/images/72037-1.jpg", isNew: true },
+        { name: "쿠파 성 보스전 확장팩", theme: "mario", age: "child", gender: "boy", price: "159,900원", imageUrl: "https://images.brickset.com/sets/images/71369-1.jpg" },
+        { name: "슈퍼 마리오 캐릭터팩", theme: "mario", age: "child", gender: "unisex", price: "14,900원", imageUrl: "https://images.brickset.com/sets/images/71361-1.jpg" },
+
+        // 크리에이터
+        { name: "사나운 공룡", theme: "creator", age: "child", gender: "unisex", price: "24,900원", imageUrl: "https://images.brickset.com/sets/images/31379-1.jpg", isNew: true },
+        { name: "거북이", theme: "creator", age: "child", gender: "unisex", price: "19,900원", imageUrl: "https://images.brickset.com/sets/images/31377-1.jpg", isNew: true },
+        { name: "마법의 유니콘", theme: "creator", age: "child", gender: "girl", price: "19,900원", imageUrl: "https://images.brickset.com/sets/images/31140-1.jpg" },
+        { name: "자연사 박물관", theme: "creator", age: "adult", gender: "unisex", price: "399,900원", imageUrl: "https://images.brickset.com/sets/images/10326-1.jpg" }
+    ];
+
+    // 테마 이름을 한글로 예쁘게 표시하기 위한 매핑
+    const themeNames = {
+        icons: "아이콘", city: "시티", technic: "테크닉", ninjago: "닌자고",
+        minecraft: "마인크래프트", starwars: "스타워즈",
+        friends: "프렌즈", harrypotter: "해리포터",
+        mario: "슈퍼 마리오", creator: "크리에이터"
+    };
+
+    // 테마별 카드 썸네일(이모지 + 배경색) — 외부 이미지 없이 안정적으로 표시
+    const themeVisuals = {
+        icons: { emoji: "🦇", bg: "#1f2937" },
+        city: { emoji: "🚓", bg: "#dbeafe" },
+        technic: { emoji: "🏎️", bg: "#fee2e2" },
+        ninjago: { emoji: "🐉", bg: "#dcfce7" },
+        minecraft: { emoji: "⛏️", bg: "#d1fae5" },
+        starwars: { emoji: "🚀", bg: "#0f172a" },
+        friends: { emoji: "🌷", bg: "#fce7f3" },
+        harrypotter: { emoji: "🪄", bg: "#ede9fe" },
+        mario: { emoji: "🍄", bg: "#fef3c7" },
+        creator: { emoji: "🦖", bg: "#fed7aa" }
+    };
+
+    // 가격 문자열을 숫자로 바꿔주는 마법의 함수 (예: "89,900원" -> 89900)
+    function parsePrice(priceStr) {
+        return parseInt(priceStr.replace(/[^0-9]/g, ''));
+    }
+
+    // 이미지 주소에서 제품 번호를 뽑아 레고 코리아 공식 제품 페이지 주소를 만드는 함수
+    function getLegoUrl(lego) {
+        const match = lego.imageUrl.match(/\/(\d+)-\d+\.jpg/);
+        if (match) {
+            return `https://www.lego.com/ko-kr/product/${match[1]}`;
+        }
+        return `https://www.lego.com/ko-kr/search?q=${encodeURIComponent(lego.name)}`;
+    }
+
+    // 모든 필터를 초기화하는 함수 (초기화 후에도 전체 목록을 다시 보여줍니다)
+    function resetFilters() {
+        document.getElementById('searchInput').value = "";
+        document.getElementById('priceSelect').value = "all";
+        document.getElementById('ageSelect').value = "all";
+        document.getElementById('genderSelect').value = "all";
+        document.getElementById('themeSelect').value = "all";
+        document.getElementById('sortSelect').value = "default";
+        findLego();
+    }
+
+    function findLego() {
+        const searchText = document.getElementById('searchInput').value.trim().toLowerCase();
+        const selectedPrice = document.getElementById('priceSelect').value;
+        const selectedAge = document.getElementById('ageSelect').value;
+        const selectedGender = document.getElementById('genderSelect').value;
+        const selectedTheme = document.getElementById('themeSelect').value;
+        const selectedSort = document.getElementById('sortSelect').value;
+        const resultBox = document.getElementById('resultBox');
+        const resultSummary = document.getElementById('resultSummary');
+
+        resultBox.innerHTML = "";
+
+        // 1. 필터링 로직
+        let matchedLegos = legoData.filter(lego => {
+            const themeLabel = themeNames[lego.theme] || "";
+            const searchMatch = searchText === "" ||
+                lego.name.toLowerCase().includes(searchText) ||
+                themeLabel.toLowerCase().includes(searchText);
+
+            const ageMatch = selectedAge === "all" || lego.age === selectedAge;
+            const themeMatch = selectedTheme === "all" || lego.theme === selectedTheme;
+            const genderMatch = selectedGender === "all" || lego.gender === selectedGender || lego.gender === "unisex";
+
+            const priceNum = parsePrice(lego.price);
+            let priceMatch = true;
+            if (selectedPrice === "under5") priceMatch = priceNum < 50000;
+            else if (selectedPrice === "under10") priceMatch = priceNum >= 50000 && priceNum <= 100000;
+            else if (selectedPrice === "under30") priceMatch = priceNum > 100000 && priceNum <= 300000;
+            else if (selectedPrice === "over30") priceMatch = priceNum > 300000;
+
+            return searchMatch && ageMatch && themeMatch && genderMatch && priceMatch;
+        });
+
+        // 2. 정렬 로직
+        if (selectedSort === "priceAsc") {
+            matchedLegos.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
+        } else if (selectedSort === "priceDesc") {
+            matchedLegos.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+        } else if (selectedSort === "nameAsc") {
+            matchedLegos.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+        }
+
+        // 3. 결과 요약
+        resultSummary.textContent = `총 ${matchedLegos.length}개의 레고를 찾았어요 🧱`;
+
+        // 4. 결과 출력
+        if (matchedLegos.length === 0) {
+            resultBox.innerHTML = `
+                <div style="text-align:center; padding: 40px 0;">
+                    <span style="font-size: 3rem;">😢</span>
+                    <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 15px;">조건에 맞는 레고가 없어요.<br>검색어 규칙이나 가격대를 조금만 바꿔보세요!</p>
+                </div>`;
+            return;
+        }
+
+        matchedLegos.forEach(lego => {
+            const card = document.createElement('a');
+            card.className = 'lego-card';
+            card.href = getLegoUrl(lego);
+            card.target = '_blank';
+            card.rel = 'noopener noreferrer';
+            card.setAttribute('aria-label', `${lego.name} - 레고 공식 사이트에서 보기`);
+
+            const newBadge = lego.isNew ? '<span class="new-badge">NEW</span>' : '';
+
+            card.innerHTML = `
+                <div class="lego-info">
+                    <h3>${lego.name}${newBadge}</h3>
+                    <p>💰 가격: <strong>${lego.price}</strong></p>
+                    <span class="lego-tag">#${themeNames[lego.theme]}</span>
+                    <span class="lego-link-hint">레고 공식 사이트에서 보기 →</span>
+                </div>
+                <img src="${lego.imageUrl}" alt="${lego.name}" class="lego-image" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/2/24/LEGO_logo.svg'">
+            `;
+            resultBox.appendChild(card);
+        });
+    }
+
+    document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            findLego();
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', findLego);
+</script>
+
+</body>
+</html>
